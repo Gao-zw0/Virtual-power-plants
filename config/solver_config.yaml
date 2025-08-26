@@ -1,0 +1,79 @@
+# 求解器配置文件
+# Solver Configuration
+
+# 求解器选择
+solver:
+  name: "cbc"  # 求解器名称
+  executable_path: "cbc/bin/cbc.exe"  # CBC可执行文件路径
+  
+# CBC求解器参数
+cbc_options:
+  # 基本参数
+  threads: 4  # 使用的线程数
+  timeLimit: 300  # 时间限制（秒）
+  ratioGap: 0.01  # 最优性间隙（1%）
+  
+  # 高级参数
+  preprocess: "on"  # 预处理
+  cuts: "on"  # 割平面算法
+  heuristics: "on"  # 启发式算法
+  
+  # 输出控制
+  logLevel: 1  # 日志级别（0=无输出，1=基本，2=详细）
+  
+# 备用求解器配置
+alternative_solvers:
+  # GLPK求解器（开源备选）
+  glpk:
+    name: "glpk"
+    options:
+      tmlim: 300  # 时间限制
+      mipgap: 0.01  # MIP间隙
+      
+  # Gurobi求解器（商业软件，如果可用）
+  gurobi:
+    name: "gurobi"
+    options:
+      TimeLimit: 300
+      MIPGap: 0.01
+      Threads: 4
+
+# 求解策略
+solving_strategy:
+  # 自动求解器选择
+  auto_select: true  # 自动选择可用的最佳求解器
+  
+  # 求解器优先级
+  priority_order: ["cbc", "glpk", "gurobi"]
+  
+  # 失败时的重试策略
+  retry_on_failure: true
+  max_retries: 3
+  
+  # 求解结果验证
+  verify_solution: true  # 验证解的可行性
+  tolerance: 1e-6  # 数值容差
+
+# 性能监控
+performance:
+  # 求解时间监控
+  log_solve_time: true
+  
+  # 内存使用监控
+  log_memory_usage: true
+  
+  # 迭代过程记录
+  log_iterations: false
+
+# 调试设置
+debug:
+  # 保存求解器日志
+  save_solver_log: true
+  log_file_path: "./logs/solver.log"
+  
+  # 保存优化模型文件
+  save_model_file: false
+  model_file_path: "./logs/optimization_model.lp"
+  
+  # 详细输出
+  verbose: false

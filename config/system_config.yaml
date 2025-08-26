@@ -1,0 +1,104 @@
+# 虚拟电厂系统配置文件
+# Virtual Power Plant System Configuration
+
+# 时间设置
+time_settings:
+  periods: 24  # 优化时间段数量（小时）
+  start_date: "2024-01-01"  # 开始日期
+  frequency: "H"  # 时间频率（H=小时）
+
+# 能源资源配置
+energy_resources:
+  # 光伏发电
+  photovoltaic:
+    capacity_mw: 50  # 装机容量 (MW)
+    variable_cost_yuan_mwh: 5  # 运维成本 (元/MWh)
+    
+  # 风力发电
+  wind:
+    capacity_mw: 30  # 装机容量 (MW)
+    variable_cost_yuan_mwh: 8  # 运维成本 (元/MWh)
+    
+  # 燃气机组
+  gas_turbine:
+    capacity_mw: 100  # 装机容量 (MW)
+    variable_cost_yuan_mwh: 600  # 发电成本 (元/MWh)
+    min_output_ratio: 0.3  # 最小出力比例
+    
+  # 储能系统
+  battery_storage:
+    power_capacity_mw: 50  # 功率容量 (MW)
+    energy_capacity_mwh: 200  # 能量容量 (MWh)
+    charge_efficiency: 0.95  # 充电效率
+    discharge_efficiency: 0.95  # 放电效率
+    self_discharge_rate: 0.001  # 自放电率 (%/h)
+    initial_soc: 0.5  # 初始SOC
+    charge_cost_yuan_mwh: 10  # 充电成本 (元/MWh)
+    discharge_cost_yuan_mwh: 15  # 放电成本 (元/MWh)
+
+# 可调负荷配置
+adjustable_loads:
+  # 冷机系统
+  chiller:
+    rated_power_mw: 20  # 额定功率 (MW)
+    min_power_ratio: 0.3  # 最小功率比例
+    max_power_ratio: 1.0  # 最大功率比例
+    efficiency: 0.85  # 制冷效率
+    operating_cost_yuan_mwh: 50  # 运行成本 (元/MWh)
+    demand_response_capability: true  # 需求响应能力
+    response_time_minutes: 5  # 响应时间 (分钟)
+    
+  # 热机系统
+  heat_pump:
+    rated_power_mw: 15  # 额定功率 (MW)
+    min_power_ratio: 0.2  # 最小功率比例
+    max_power_ratio: 1.0  # 最大功率比例
+    cop: 3.5  # 制热系数 (Coefficient of Performance)
+    operating_cost_yuan_mwh: 40  # 运行成本 (元/MWh)
+    demand_response_capability: true  # 需求响应能力
+    response_time_minutes: 3  # 响应时间 (分钟)
+
+# 电网交易配置
+grid_connection:
+  max_purchase_mw: 1000  # 最大购电功率 (MW)
+  max_sale_mw: 500  # 最大售电功率 (MW)
+  sale_price_ratio: 0.95  # 售电价格比例（相对购电价格）
+
+# 负荷特性
+load_profile:
+  base_load_pattern: [45, 42, 40, 38, 37, 39, 42, 48, 55, 60, 
+                     65, 68, 70, 72, 70, 68, 66, 65, 62, 58, 
+                     55, 52, 48, 46]  # 24小时负荷模式 (MW)
+  load_uncertainty: 0.02  # 负荷不确定性 (±2%)
+
+# 电价配置
+electricity_prices:
+  base_price_pattern: [300, 280, 260, 250, 250, 270, 320, 380, 420, 450,
+                      480, 500, 520, 540, 530, 510, 480, 460, 440, 420,
+                      400, 370, 340, 320]  # 24小时电价模式 (元/MWh)
+  price_volatility: 0.05  # 价格波动性 (±5%)
+
+# 可再生能源出力模式
+renewable_patterns:
+  # 光伏出力模式（标准化0-1）
+  pv_pattern: [0, 0, 0, 0, 0, 0, 0.05, 0.15, 0.35, 0.55,
+              0.75, 0.85, 0.90, 0.95, 0.90, 0.80, 0.65, 0.45,
+              0.25, 0.10, 0.02, 0, 0, 0]
+  
+  # 天气不确定性
+  weather_uncertainty:
+    mean: 0.9  # 平均天气系数
+    std: 0.1   # 标准差
+    min: 0.3   # 最小值
+    max: 1.0   # 最大值
+
+# 随机种子（保证结果可重现）
+random_seed: 42
+
+# 输出设置
+output_settings:
+  save_plots: true  # 保存图表
+  save_results: true  # 保存结果数据
+  plot_format: "png"  # 图表格式
+  plot_dpi: 300  # 图片分辨率
+  results_format: "csv"  # 结果数据格式

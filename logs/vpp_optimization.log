@@ -1,0 +1,23 @@
+******************************************************
+2025-08-26 17:01:53,945 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:01:53,965 - DEBUG - block - Constructing Model 'Model', from data=None
+2025-08-26 17:02:18,332 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:02:18,364 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:18,365 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:18,366 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:18,371 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:58,886 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:02:58,913 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:58,913 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:58,914 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:02:58,914 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:05:23,359 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:05:23,384 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:05:23,385 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:05:23,385 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:05:23,386 - WARNING - CBCplugin - Could not locate the 'cbc' executable, which is required for solver cbc
+2025-08-26 17:06:38,337 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:09:59,900 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:11:13,306 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:19:43,732 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
+2025-08-26 17:20:05,645 - INFO - logger - Path for logging: D:\py_work\vpp_opt_test_qqder\logs\vpp_optimization.log
