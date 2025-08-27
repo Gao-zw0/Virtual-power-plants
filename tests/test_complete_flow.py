@@ -7,12 +7,16 @@ Test Complete Workflow
 
 import os
 import sys
-sys.path.append('src')
+# 添加src目录到Python路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)  # 从tests目录回到项目根目录
+src_dir = os.path.join(project_root, 'src')
+sys.path.insert(0, src_dir)
 
-from data.data_generator import VPPDataGenerator
-from models.vpp_model import VPPOptimizationModel
-from analysis.result_analyzer import ResultAnalyzer
-from visualization.plot_generator import PlotGenerator
+from src.data.data_generator import VPPDataGenerator
+from src.models.vpp_model import VPPOptimizationModel
+from src.analysis.result_analyzer import ResultAnalyzer
+from src.visualization.plot_generator import PlotGenerator
 
 # 直接使用pyomo调用CBC
 from pyomo.opt import SolverFactory
@@ -47,7 +51,7 @@ def test_complete_flow():
         print("✓ 优化模型创建成功")
         
         # 设置CBC路径
-        cbc_path = os.path.join(os.getcwd(), 'cbc', 'bin', 'cbc.exe')
+        cbc_path = os.path.join(project_root, 'cbc', 'bin', 'cbc.exe')
         print(f"CBC路径: {cbc_path}")
         print(f"文件存在: {os.path.exists(cbc_path)}")
         

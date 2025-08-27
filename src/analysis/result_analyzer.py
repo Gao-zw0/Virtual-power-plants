@@ -626,6 +626,53 @@ class ResultAnalyzer:
         
         print(f"分析结果已保存到 {output_dir} 目录")
         return saved_files
+    
+    def save_results_to_session(self, session_context) -> Dict[str, str]:
+        """
+        保存分析结果到会话目录
+        
+        Args:
+            session_context: 会话上下文
+            
+        Returns:
+            保存的文件路径字典
+        """
+        if self.results_df is None:
+            print("错误：没有可保存的结果")
+            return {}
+        
+        saved_files = {}
+        
+        # 保存时间序列结果
+        results_path = session_context.save_file(
+            'optimization_results', 'optimization_results.csv', self.results_df
+        )
+        saved_files['results'] = str(results_path)
+        
+        # 保存经济性分析
+        if self.economics:
+            economics_df = pd.DataFrame(list(self.economics.items()), columns=['指标', '数值'])
+            economics_path = session_context.save_file(
+                'economics_analysis', 'economics_analysis.csv', economics_df
+            )
+            saved_files['economics'] = str(economics_path)
+        
+        # 保存技术指标
+        if self.technical_metrics:
+            metrics_df = pd.DataFrame(list(self.technical_metrics.items()), columns=['指标', '数值'])
+            metrics_path = session_context.save_file(
+                'technical_metrics', 'technical_metrics.csv', metrics_df
+            )
+            saved_files['metrics'] = str(metrics_path)
+        
+        # 保存汇总报告
+        report_content = self.generate_summary_report()
+        report_path = session_context.save_file(
+            'summary_report', 'summary_report.txt', report_content
+        )
+        saved_files['report'] = str(report_path)
+        
+        return saved_files
 
 
 # 示例使用

@@ -257,12 +257,13 @@ class VPPDataGenerator:
         
         return load_data, pv_data, wind_data, price_data
     
-    def save_data(self, output_dir: str = "outputs") -> str:
+    def save_data(self, output_dir: str = "outputs", filename: str = None) -> str:
         """
         保存生成的数据到文件
         
         Args:
             output_dir: 输出目录
+            filename: 自定义文件名（可选）
             
         Returns:
             保存的文件路径
@@ -281,15 +282,43 @@ class VPPDataGenerator:
             'electricity_price_yuan_mwh': price_data
         })
         
-        # 保存到CSV文件
-        timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"vpp_input_data_{timestamp}.csv"
+        # 生成文件名
+        if filename is None:
+            timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"vpp_input_data_{timestamp}.csv"
+        
         filepath = os.path.join(output_dir, filename)
         
         data_df.to_csv(filepath, index=True, encoding='utf-8-sig')
         
         print(f"数据已保存到: {filepath}")
         return filepath
+    
+    def save_data_to_session(self, session_context, filename: str = "input_data.csv") -> str:
+        """
+        保存数据到会话目录
+        
+        Args:
+            session_context: 会话上下文
+            filename: 文件名
+            
+        Returns:
+            保存的文件路径
+        """
+        # 生成所有数据
+        load_data, pv_data, wind_data, price_data = self.generate_all_data()
+        
+        # 合并数据到DataFrame
+        data_df = pd.DataFrame({
+            'load_demand_mw': load_data,
+            'pv_generation_mw': pv_data,
+            'wind_generation_mw': wind_data,
+            'electricity_price_yuan_mwh': price_data
+        })
+        
+        # 保存到会话目录
+        filepath = session_context.save_file('input_data', filename, data_df)
+        return str(filepath)
 
 
 # 示例使用

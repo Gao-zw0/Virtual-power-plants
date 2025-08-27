@@ -79,6 +79,57 @@ class PlotGenerator:
         print(f"图表已保存为: {filepath}")
         return filepath
     
+    def generate_plots_to_session(self, results_df: pd.DataFrame, economics: Dict,
+                                 price_data: pd.Series, session_context, 
+                                 filename: str = "optimization_results.png") -> str:
+        """
+        生成图表并保存到会话目录
+        
+        Args:
+            results_df: 结果数据框
+            economics: 经济性分析
+            price_data: 电价数据
+            session_context: 会话上下文
+            filename: 文件名
+            
+        Returns:
+            保存的图片文件路径
+        """
+        print("正在生成可视化图表...")
+        
+        # 创建图表
+        fig, axes = plt.subplots(3, 2, figsize=(16, 12))
+        fig.suptitle('虚拟电厂调度优化结果分析', fontsize=16, fontweight='bold')
+        
+        # 1. 发电资源出力
+        self._plot_generation_profile(axes[0, 0], results_df)
+        
+        # 2. 负荷与供应平衡
+        self._plot_load_balance(axes[0, 1], results_df)
+        
+        # 3. 储能运行状态
+        self._plot_battery_operation(axes[1, 0], results_df)
+        
+        # 4. 辅助服务
+        self._plot_ancillary_services(axes[1, 1], results_df)
+        
+        # 5. 电价曲线
+        self._plot_electricity_prices(axes[2, 0], price_data)
+        
+        # 6. 成本结构
+        self._plot_cost_structure(axes[2, 1], economics)
+        
+        # 调整布局
+        plt.tight_layout()
+        
+        # 保存到会话目录
+        plot_path = session_context.get_file_path('plots', filename)
+        plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+        plt.close()  # 关闭图表以释放内存
+        
+        print(f"图表已保存为: {plot_path}")
+        return str(plot_path)
+    
     def _plot_generation_profile(self, ax, results_df):
         """绘制发电资源出力曲线"""
         time_index = results_df.index

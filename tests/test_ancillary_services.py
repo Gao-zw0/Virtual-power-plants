@@ -13,7 +13,10 @@ import yaml
 from datetime import datetime
 
 # 添加src目录到路径
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)  # 从tests目录回到项目根目录
+src_dir = os.path.join(project_root, 'src')
+sys.path.insert(0, src_dir)
 
 from src.data.data_generator import VPPDataGenerator
 from src.models.vpp_model import VPPOptimizationModel

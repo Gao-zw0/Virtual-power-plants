@@ -23,6 +23,7 @@ from src.models.scheduling_modes import VPPSchedulingManager, SchedulingMode, Op
 from src.solvers.optimization_solver import OptimizationSolver
 from src.analysis.result_analyzer import ResultAnalyzer
 from src.visualization.plot_generator import PlotGenerator
+from src.utils.file_manager import VPPFileManager, SessionContext
 
 # 导入oemof模块
 import oemof.solph as solph
@@ -119,121 +120,167 @@ def run_single_mode_analysis_with_objective(mode: SchedulingMode, objective: Opt
     """运行带优化目标的单个调度模式分析"""
     total_start_time = time.time()
     
-    try:
-        # 步骤1: 数据生成
-        print("\n🔸 步骤1: 生成虚拟电厂数据")
-        print("-" * 40)
-        
-        data_generator = VPPDataGenerator()
-        load_data, pv_data, wind_data, price_data = data_generator.generate_all_data()
-        
-        # 保存输入数据
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        data_file = data_generator.save_data(f"outputs/mode_{mode.value}_{objective.value}")
-        print(f"✓ 输入数据已保存: {data_file}")
-        
-        # 步骤2: 创建调度模式管理器和优化模型
-        print("\n🔸 步骤2: 构建调度模式优化模型")
-        print("-" * 40)
-        
-        manager = VPPSchedulingManager()
-        model = manager.create_optimized_model(mode, data_generator.time_index, objective)
-        energy_system = model.create_energy_system(load_data, pv_data, wind_data, price_data)
-        
-        # 验证系统
-        if not model.validate_system():
-            print("❌ 能源系统验证失败，程序终止")
-            return False, {}
-        
-        system_summary = model.get_system_summary()
-        print(f"✓ 能源系统构建完成")
-        print(f"  - 组件总数: {system_summary['total_components']}")
-        print(f"  - 时间段数: {system_summary['time_periods']}")
-        print(f"  - 优化目标: {system_summary.get('optimization_objective', 'N/A')}")
-        
-        # 步骤3: 优化求解（继续使用原有逻辑）
-        print("\n🔸 步骤3: 执行优化求解")
-        print("-" * 40)
-        
-        # 使用原有的求解逻辑...
-        import oemof.solph as solph
+    # 创建文件管理器
+    file_manager = VPPFileManager()
+    
+    # 使用会话上下文管理文件
+    with SessionContext(file_manager, mode, objective) as session:
         
         try:
-            opt_model = solph.Model(energy_system)
-            print("✓ 优化模型创建成功")
+            # 步骤1: 数据生成
+            print("\n🔸 步骤1: 生成虚拟电厂数据")
+            print("-" * 40)
             
-            cbc_path = os.path.join(os.getcwd(), 'cbc', 'bin', 'cbc.exe')
+            data_generator = VPPDataGenerator()
+            load_data, pv_data, wind_data, price_data = data_generator.generate_all_data()
             
-            from pyomo.opt import SolverFactory
-            solver = SolverFactory('cbc', executable=cbc_path)
+            # 保存输入数据到会话目录
+            input_data_path = data_generator.save_data_to_session(session, "input_data.csv")
+            print(f"✓ 输入数据已保存: {input_data_path}")
             
-            if not solver.available():
-                print("❌ CBC求解器不可用，程序终止")
+            # 步骤2: 创建调度模式管理器和优化模型
+            print("\n🔸 步骤2: 构建调度模式优化模型")
+            print("-" * 40)
+            
+            manager = VPPSchedulingManager()
+            model = manager.create_optimized_model(mode, data_generator.time_index, objective)
+            energy_system = model.create_energy_system(load_data, pv_data, wind_data, price_data)
+            
+            # 验证系统
+            if not model.validate_system():
+                print("❌ 能源系统验证失败，程序终止")
                 return False, {}
             
-            print(f"✓ 使用CBC求解器: {cbc_path}")
+            system_summary = model.get_system_summary()
+            print(f"✓ 能源系统构建完成")
+            print(f"  - 组件总数: {system_summary['total_components']}")
+            print(f"  - 时间段数: {system_summary['time_periods']}")
+            print(f"  - 优化目标: {objective.value}")
             
-            solve_start_time = time.time()
-            results = solver.solve(opt_model, tee=False)
-            solve_time = time.time() - solve_start_time
+            # 步骤3: 优化求解
+            print("\n🔸 步骤3: 执行优化求解")
+            print("-" * 40)
             
-            if str(results.solver.termination_condition).lower() in ['optimal', 'feasible']:
-                print("✓ 优化求解成功")
-                print(f"  - 求解时间: {solve_time:.2f} 秒")
+            try:
+                opt_model = solph.Model(energy_system)
+                print("✓ 优化模型创建成功")
                 
-                optimization_results = solph.processing.results(opt_model)
-            else:
-                print(f"❌ 求解失败，状态: {results.solver.termination_condition}")
+                cbc_path = os.path.join(os.getcwd(), 'cbc', 'bin', 'cbc.exe')
+                
+                from pyomo.opt import SolverFactory
+                solver = SolverFactory('cbc', executable=cbc_path)
+                
+                if not solver.available():
+                    print("❌ CBC求解器不可用，程序终止")
+                    return False, {}
+                
+                print(f"✓ 使用CBC求解器: {cbc_path}")
+                
+                solve_start_time = time.time()
+                results = solver.solve(opt_model, tee=False)
+                solve_time = time.time() - solve_start_time
+                
+                if str(results.solver.termination_condition).lower() in ['optimal', 'feasible']:
+                    print("✓ 优化求解成功")
+                    print(f"  - 求解时间: {solve_time:.2f} 秒")
+                    
+                    optimization_results = solph.processing.results(opt_model)
+                else:
+                    print(f"❌ 求解失败，状态: {results.solver.termination_condition}")
+                    return False, {}
+                    
+            except Exception as e:
+                print(f"❌ 求解过程中发生错误: {e}")
                 return False, {}
-                
+            
+            # 步骤4: 分析优化结果
+            print("\n🔸 步骤4: 分析优化结果")
+            print("-" * 40)
+            
+            analyzer = ResultAnalyzer()
+            results_df, economics, technical_metrics = analyzer.analyze_results(
+                optimization_results, energy_system, data_generator.time_index, price_data
+            )
+            
+            # 保存结果到会话目录
+            saved_files = analyzer.save_results_to_session(session)
+            print(f"✓ 结果分析完成，已保存 {len(saved_files)} 个文件")
+            
+            # 步骤5: 生成可视化图表
+            print("\n🔸 步骤5: 生成可视化图表")
+            print("-" * 40)
+            
+            plot_generator = PlotGenerator()
+            plot_path = plot_generator.generate_plots_to_session(
+                results_df, economics, price_data, session, "optimization_results.png"
+            )
+            print(f"✓ 可视化图表已生成: {plot_path}")
+            
+            # 步骤6: 生成模式总结报告
+            print("\n🔸 步骤6: 生成模式总结报告")
+            print("-" * 40)
+            
+            # 创建模式特定的总结报告
+            mode_summary = f"""
+{"=" * 80}
+虚拟电厂调度模式总结报告
+{"=" * 80}
+
+【模式信息】
+调度模式: {mode.value}
+优化目标: {objective.value}
+模式描述: {manager.get_mode_description(mode)}
+目标描述: {manager.get_objective_function_description(objective)}
+
+【系统配置】
+组件总数: {system_summary['total_components']}
+时间段数: {system_summary['time_periods']}
+起始时间: {system_summary['start_time']}
+结束时间: {system_summary['end_time']}
+
+【资源配置】
+"""
+            # 添加资源配置信息
+            resources = manager.get_mode_resources(mode)
+            for resource, enabled in resources.items():
+                status = "✓ 启用" if enabled else "✗ 禁用"
+                mode_summary += f"{resource}: {status}\n"
+            
+            mode_summary += f"\n\n{analyzer.generate_summary_report()}"
+            
+            mode_summary_path = session.save_file(
+                'summary_report', 'mode_summary_report.txt', mode_summary
+            )
+            print(f"✓ 模式总结报告已生成: {mode_summary_path}")
+            
+            # 打印关键指标
+            print(f"\n📊 关键指标:")
+            print(f"  - 总负荷: {technical_metrics['load_total_mwh']:.1f} MWh")
+            print(f"  - 可再生能源渗透率: {technical_metrics['renewable_penetration_ratio']:.1%}")
+            print(f"  - 自给自足率: {technical_metrics['self_sufficiency_ratio']:.1%}")
+            print(f"  - 净运行成本: {economics['net_cost_yuan']:,.0f} 元")
+            print(f"  - 平均供电成本: {economics['average_cost_yuan_per_mwh']:.2f} 元/MWh")
+            
+            # 程序完成
+            total_time = time.time() - total_start_time
+            print(f"\n🎉 {mode.value} 调度模式（{objective.value}）优化完成！")
+            print(f"🕰️  总耗时: {total_time:.2f} 秒")
+            print(f"📁 会话目录: {session.session_dir}")
+            
+            return True, {
+                'session_dir': str(session.session_dir),
+                'economics': economics,
+                'technical_metrics': technical_metrics,
+                'solve_time': solve_time,
+                'total_time': total_time
+            }
+            
         except Exception as e:
-            print(f"❌ 求解过程中发生错误: {e}")
+            print(f"❌ 系统错误: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False, {}
-        
-        # 继续使用原有的分析逻辑...
-        print("\n🔸 步骤4: 分析优化结果")
-        print("-" * 40)
-        
-        from src.analysis.result_analyzer import ResultAnalyzer
-        analyzer = ResultAnalyzer()
-        results_df, economics, technical_metrics = analyzer.analyze_results(
-            optimization_results, energy_system, data_generator.time_index, price_data
-        )
-        
-        output_dir = f"outputs/mode_{mode.value}_{objective.value}"
-        os.makedirs(output_dir, exist_ok=True)
-        saved_files = analyzer.save_results(output_dir)
-        print(f"✓ 结果分析完成，已保存 {len(saved_files)} 个文件")
-        
-        # 打印关键指标
-        print(f"\n📊 关键指标:")
-        print(f"  - 总负荷: {technical_metrics['load_total_mwh']:.1f} MWh")
-        print(f"  - 可再生能源渗透率: {technical_metrics['renewable_penetration_ratio']:.1%}")
-        print(f"  - 自给自足率: {technical_metrics['self_sufficiency_ratio']:.1%}")
-        print(f"  - 净运行成本: {economics['net_cost_yuan']:,.0f} 元")
-        print(f"  - 平均供电成本: {economics['average_cost_yuan_per_mwh']:.2f} 元/MWh")
-        
-        # 程序完成
-        total_time = time.time() - total_start_time
-        print(f"\n🎉 {mode.value} 调度模式（{objective.value}）优化完成！")
-        print(f"总用时: {total_time:.2f} 秒")
-        
-        summary = {
-            'mode': mode,
-            'objective': objective,
-            'economics': economics,
-            'technical_metrics': technical_metrics,
-            'total_time': total_time,
-            'output_dir': output_dir
-        }
-        
-        return True, summary
-        
-    except Exception as e:
-        print(f"\n❌ {mode.value} 模式执行过程中发生错误:")
-        print(f"错误类型: {type(e).__name__}")
-        print(f"错误信息: {str(e)}")
-        return False, {}
+
 
 
 def run_scheduling_mode_by_enum_with_objective(mode: SchedulingMode, objective: OptimizationObjective):

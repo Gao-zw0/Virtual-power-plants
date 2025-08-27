@@ -131,17 +131,29 @@ python main.py --help
 ### 3. 测试功能
 
 ```bash
-# 测试基本功能
-python test_cbc.py
+# 运行所有测试
+python test_runner.py
 
-# 测试完整流程
-python test_complete_flow.py
+# 运行基本功能测试
+python test_runner.py --type basic
+
+# 测试CBC求解器
+python test_runner.py --type cbc
+
+# 测试调度模式
+python test_runner.py --type scheduling
+
+# 测试优化目标
+python test_runner.py --type objectives
 
 # 测试可调负荷功能
-python test_adjustable_loads.py
+python test_runner.py --type loads
 
 # 测试辅助服务功能
-python test_ancillary_services.py
+python test_runner.py --type ancillary
+
+# 测试完整流程
+python test_runner.py --type flow
 
 # 运行单元测试
 python tests/test_vpp_system.py

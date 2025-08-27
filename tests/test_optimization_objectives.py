@@ -12,7 +12,8 @@ from datetime import datetime
 
 # 添加src目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+project_root = os.path.dirname(current_dir)  # 从tests目录回到项目根目录
+src_dir = os.path.join(project_root, 'src')
 sys.path.insert(0, src_dir)
 
 # 导入项目模块
