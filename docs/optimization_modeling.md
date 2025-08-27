@@ -42,11 +42,19 @@
 - $SOC(t)$ : 储能荷电状态 [%]
 - $u_{ch}(t), u_{dis}(t)$ : 充放电状态变量 {0,1}
 
-### 2.3 可调负荷变量
+### 2.3 辅助服务变量
+- $P_{reg}^{up}(t)$ : 向上调频预留容量 [MW]
+- $P_{reg}^{down}(t)$ : 向下调频预留容量 [MW]
+- $P_{spin}^{up}(t)$ : 向上备用容量 [MW]
+- $P_{spin}^{down}(t)$ : 向下备用容量 [MW]
+- $u_{reg}(t)$ : 调频服务参与状态 {0,1}
+- $u_{spin}(t)$ : 备用服务参与状态 {0,1}
+
+### 2.4 可调负荷变量
 - $P_{chill}(t)$ : 冷机功率 [MW]
 - $P_{heat}(t)$ : 热泵功率 [MW]
 
-### 2.4 电网交互变量
+### 2.5 电网交互变量
 - $P_{buy}(t)$ : 从电网购电功率 [MW]
 - $P_{sell}(t)$ : 向电网售电功率 [MW]
 
@@ -57,8 +65,10 @@
 ### 3.1 总成本最小化目标
 
 $$
-\min Z = \sum_{t=1}^{T} \left[ C_{gen}(t) + C_{bat}(t) + C_{load}(t) + C_{grid}(t) \right]
+\min Z = \sum_{t=1}^{T} \left[ C_{gen}(t) + C_{bat}(t) + C_{load}(t) + C_{grid}(t) - R_{as}(t) \right]
 $$
+
+其中 $R_{as}(t)$ 为辅助服务收入。
 
 ### 3.2 成本组成详解
 
@@ -99,6 +109,20 @@ $$
 其中：
 - $c_{buy}(t)$ : 分时购电价格 [元/MWh]
 - $c_{sell}(t) = 0.95 \times c_{buy}(t)$ : 售电价格 [元/MWh]
+
+#### 3.2.5 辅助服务收入
+$$
+R_{as}(t) = \lambda_{reg}^{up}(t) \cdot P_{reg}^{up}(t) + \lambda_{reg}^{down}(t) \cdot P_{reg}^{down}(t) + 
+$$
+$$
+\lambda_{spin}^{up}(t) \cdot P_{spin}^{up}(t) + \lambda_{spin}^{down}(t) \cdot P_{spin}^{down}(t)
+$$
+
+其中：
+- $\lambda_{reg}^{up}(t) = 80$ 元/MW （向上调频价格）
+- $\lambda_{reg}^{down}(t) = 70$ 元/MW （向下调频价格）
+- $\lambda_{spin}^{up}(t) = 60$ 元/MW （向上备用价格）
+- $\lambda_{spin}^{down}(t) = 50$ 元/MW （向下备用价格）
 
 ---
 
@@ -174,23 +198,70 @@ $$
 - $\eta_{ch} = \eta_{dis} = 0.95$
 - $SOC_{min} = 0.2, SOC_{max} = 0.9$
 
-### 4.4 可调负荷约束
+### 4.4 辅助服务约束
 
-#### 4.4.1 冷机约束
+#### 4.4.1 容量预留约束
+$$
+P_{bat}^{ch}(t) + P_{reg}^{up}(t) + P_{spin}^{up}(t) \leq P_{bat}^{max} \quad \forall t
+$$
+$$
+P_{bat}^{dis}(t) + P_{reg}^{down}(t) + P_{spin}^{down}(t) \leq P_{bat}^{max} \quad \forall t
+$$
+
+#### 4.4.2 SOC支撑约束
+$$
+SOC(t) \geq SOC_{min} + \frac{P_{reg}^{down}(t) + P_{spin}^{down}(t)}{E_{bat}^{max}} \quad \forall t
+$$
+$$
+SOC(t) \leq SOC_{max} - \frac{P_{reg}^{up}(t) + P_{spin}^{up}(t)}{E_{bat}^{max}} \quad \forall t
+$$
+
+#### 4.4.3 调频服务约束
+$$
+0 \leq P_{reg}^{up}(t) \leq P_{reg}^{max} \cdot u_{reg}(t) \quad \forall t
+$$
+$$
+0 \leq P_{reg}^{down}(t) \leq P_{reg}^{max} \cdot u_{reg}(t) \quad \forall t
+$$
+$$
+P_{reg}^{up}(t) + P_{reg}^{down}(t) \leq P_{reg}^{max} \quad \forall t
+$$
+
+#### 4.4.4 备用服务约束
+$$
+0 \leq P_{spin}^{up}(t) \leq P_{spin}^{max} \cdot u_{spin}(t) \quad \forall t
+$$
+$$
+0 \leq P_{spin}^{down}(t) \leq P_{spin}^{max} \cdot u_{spin}(t) \quad \forall t
+$$
+$$
+P_{spin}^{up}(t) + P_{spin}^{down}(t) \leq P_{spin}^{max} \quad \forall t
+$$
+
+其中：$P_{reg}^{max} = 20$ MW, $P_{spin}^{max} = 15$ MW
+
+#### 4.4.5 辅劣服务互斥约束
+$$
+u_{reg}(t) + u_{spin}(t) \leq 1 \quad \forall t
+$$
+
+### 4.5 可调负荷约束
+
+#### 4.5.1 冷机约束
 $$
 P_{chill}^{min} \leq P_{chill}(t) \leq P_{chill}^{max} \quad \forall t
 $$
 
 其中：$P_{chill}^{max} = 20$ MW, $P_{chill}^{min} = 6$ MW
 
-#### 4.4.2 热泵约束
+#### 4.5.2 热泵约束
 $$
 P_{heat}^{min} \leq P_{heat}(t) \leq P_{heat}^{max} \quad \forall t
 $$
 
 其中：$P_{heat}^{max} = 15$ MW, $P_{heat}^{min} = 3$ MW
 
-### 4.5 电网交互约束
+### 4.6 电网交互约束
 
 $$
 0 \leq P_{buy}(t) \leq P_{buy}^{max} \quad \forall t
@@ -265,12 +336,16 @@ solver_options = {
 - **可再生能源渗透率**: 49.1%
 - **总运行成本**: 464,960元/天
 - **可调负荷参与率**: 16.4%
+- **辅助服务收入**: 38,400元/天
+- **调频服务提供容量**: 15.2 MW
+- **备用服务提供容量**: 12.8 MW
 
 ### 关键洞察
 1. **削峰填谷**: 储能系统有效平滑负荷曲线
 2. **成本优化**: 可调负荷参与显著降低系统成本
 3. **绿色调度**: 最大化可再生能源利用
 4. **灵活响应**: 多元化资源提供系统调节能力
+5. **辅助服务价值**: 储能参与辅助服务市场显著提升经济效益
 
 ---
 

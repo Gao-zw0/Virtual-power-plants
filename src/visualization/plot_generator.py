@@ -56,8 +56,8 @@ class PlotGenerator:
         # 3. 储能运行状态
         self._plot_battery_operation(axes[1, 0], results_df)
         
-        # 4. 可调负荷
-        self._plot_adjustable_loads(axes[1, 1], results_df)
+        # 4. 辅助服务
+        self._plot_ancillary_services(axes[1, 1], results_df)
         
         # 5. 电价曲线
         self._plot_electricity_prices(axes[2, 0], price_data)
@@ -133,8 +133,65 @@ class PlotGenerator:
         ax.legend()
         ax.grid(True, alpha=0.3)
         
+    def _plot_ancillary_services(self, ax, results_df):
+        """绘制辅助服务"""
+        time_index = results_df.index
+        
+        # 检查是否有辅助服务数据
+        has_ancillary_data = any(col in results_df.columns for col in 
+                               ['freq_reg_up_mw', 'freq_reg_down_mw', 
+                                'spin_reserve_up_mw', 'spin_reserve_down_mw'])
+        
+        if has_ancillary_data:
+            # 绘制调频服务
+            if 'freq_reg_up_mw' in results_df.columns:
+                ax.plot(time_index, results_df['freq_reg_up_mw'], 
+                       label='向上调频', linewidth=2, color='red', linestyle='--')
+            
+            if 'freq_reg_down_mw' in results_df.columns:
+                ax.plot(time_index, results_df['freq_reg_down_mw'], 
+                       label='向下调频', linewidth=2, color='blue', linestyle='--')
+            
+            # 绘制备用服务
+            if 'spin_reserve_up_mw' in results_df.columns:
+                ax.plot(time_index, results_df['spin_reserve_up_mw'], 
+                       label='向上备用', linewidth=2, color='orange', linestyle='-.')
+            
+            if 'spin_reserve_down_mw' in results_df.columns:
+                ax.plot(time_index, results_df['spin_reserve_down_mw'], 
+                       label='向下备用', linewidth=2, color='green', linestyle='-.')
+            
+            ax.set_title('辅助服务提供策略', fontweight='bold')
+        else:
+            # 如果没有辅助服务数据，绘制可调负荷
+            if 'chiller_load_mw' in results_df.columns:
+                ax.plot(time_index, results_df['chiller_load_mw'], 
+                       label='冷机负荷', linewidth=2, color='cyan')
+            
+            if 'heat_pump_load_mw' in results_df.columns:
+                ax.plot(time_index, results_df['heat_pump_load_mw'], 
+                       label='热机负荷', linewidth=2, color='orange')
+            
+            # 如果没有可调负荷数据，绘制电网交易
+            if 'chiller_load_mw' not in results_df.columns and 'heat_pump_load_mw' not in results_df.columns:
+                if 'grid_purchase_mw' in results_df.columns:
+                    ax.plot(time_index, results_df['grid_purchase_mw'], 
+                           label='购电', linewidth=2, color='red')
+                
+                if 'grid_sale_mw' in results_df.columns:
+                    ax.plot(time_index, results_df['grid_sale_mw'], 
+                           label='售电', linewidth=2, color='green')
+                
+                ax.set_title('电网交易策略', fontweight='bold')
+            else:
+                ax.set_title('可调负荷运行状态', fontweight='bold')
+        
+        ax.set_ylabel('功率 (MW)')
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+    
     def _plot_adjustable_loads(self, ax, results_df):
-        """绘制可调负荷"""
+        """绘制可调负荷（保留原有方法）"""
         time_index = results_df.index
         
         if 'chiller_load_mw' in results_df.columns:
@@ -145,20 +202,7 @@ class PlotGenerator:
             ax.plot(time_index, results_df['heat_pump_load_mw'], 
                    label='热机负荷', linewidth=2, color='orange')
         
-        # 如果没有可调负荷数据，绘制电网交易
-        if 'chiller_load_mw' not in results_df.columns and 'heat_pump_load_mw' not in results_df.columns:
-            if 'grid_purchase_mw' in results_df.columns:
-                ax.plot(time_index, results_df['grid_purchase_mw'], 
-                       label='购电', linewidth=2, color='red')
-            
-            if 'grid_sale_mw' in results_df.columns:
-                ax.plot(time_index, results_df['grid_sale_mw'], 
-                       label='售电', linewidth=2, color='green')
-            
-            ax.set_title('电网交易策略', fontweight='bold')
-        else:
-            ax.set_title('可调负荷运行状态', fontweight='bold')
-        
+        ax.set_title('可调负荷运行状态', fontweight='bold')
         ax.set_ylabel('功率 (MW)')
         ax.legend()
         ax.grid(True, alpha=0.3)
@@ -205,8 +249,19 @@ class PlotGenerator:
             ('grid_purchase_cost_yuan', '电网购电')
         ]
         
+        # 添加辅助服务收入（作为负成本）
+        ancillary_revenue = economics.get('ancillary_services_revenue_yuan', 0)
+        if ancillary_revenue > 0:
+            cost_items.append(('ancillary_services_revenue_yuan', '辅助服务收入'))
+            colors.append('lightgreen')
+        
         for key, label in cost_items:
-            if key in economics and economics[key] > 0:
+            if key == 'ancillary_services_revenue_yuan':
+                # 辅助服务收入作为负成本显示
+                if key in economics and economics[key] > 0:
+                    labels.append(f'辅助服务收入 (-{economics[key]:.0f}元)')
+                    values.append(economics[key] * 0.3)  # 显示为较小的正值，以区分收入和成本
+            elif key in economics and economics[key] > 0:
                 labels.append(label)
                 values.append(economics[key])
         

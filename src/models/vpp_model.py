@@ -268,18 +268,38 @@ class VPPOptimizationModel:
         """创建储能系统"""
         battery_config = self.config['energy_resources']['battery_storage']
         
-        # 储能系统
+        # 获取辅助服务配置
+        ancillary_config = battery_config.get('ancillary_services', {})
+        freq_reg_config = ancillary_config.get('frequency_regulation', {})
+        spin_reserve_config = ancillary_config.get('spinning_reserve', {})
+        
+        # 计算可用于能量交易的实际容量
+        # 需要为辅助服务预留一定容量
+        available_power_capacity = battery_config['power_capacity_mw']
+        
+        # 如果启用辅助服务，需要减去预留容量
+        if freq_reg_config.get('enable', False):
+            freq_reg_capacity = freq_reg_config.get('max_capacity_mw', 0)
+            available_power_capacity -= freq_reg_capacity * 0.5  # 为调频预留一定容量
+            
+        if spin_reserve_config.get('enable', False):
+            spin_reserve_capacity = spin_reserve_config.get('max_capacity_mw', 0)
+            available_power_capacity -= spin_reserve_capacity * 0.3  # 为备用预留一定容量
+        
+        available_power_capacity = max(available_power_capacity, battery_config['power_capacity_mw'] * 0.6)
+        
+        # 储能系统（主要用于能量交易）
         battery_storage = solph.components.GenericStorage(
             label="battery_storage",
             inputs={
                 self.components['bus_electricity']: solph.Flow(
-                    nominal_value=battery_config['power_capacity_mw'],
+                    nominal_value=available_power_capacity,
                     variable_costs=battery_config['charge_cost_yuan_mwh']
                 )
             },
             outputs={
                 self.components['bus_electricity']: solph.Flow(
-                    nominal_value=battery_config['power_capacity_mw'],
+                    nominal_value=available_power_capacity,
                     variable_costs=battery_config['discharge_cost_yuan_mwh']
                 )
             },
@@ -292,7 +312,60 @@ class VPPOptimizationModel:
             invest_relation_output_capacity=1/6
         )
         
-        self.components['energy_storage'] = [battery_storage]
+        storage_components = [battery_storage]
+        
+        # 创建辅助服务组件（如果启用）
+        if freq_reg_config.get('enable', False):
+            # 向上调频服务
+            freq_reg_up = solph.components.Sink(
+                label="freq_reg_up_service",
+                inputs={
+                    self.components['bus_electricity']: solph.Flow(
+                        nominal_value=freq_reg_config.get('max_capacity_mw', 20),
+                        variable_costs=-freq_reg_config.get('up_price_yuan_mw', 80)  # 负成本表示收入
+                    )
+                }
+            )
+            
+            # 向下调频服务
+            freq_reg_down = solph.components.Source(
+                label="freq_reg_down_service",
+                outputs={
+                    self.components['bus_electricity']: solph.Flow(
+                        nominal_value=freq_reg_config.get('max_capacity_mw', 20),
+                        variable_costs=-freq_reg_config.get('down_price_yuan_mw', 70)  # 负成本表示收入
+                    )
+                }
+            )
+            
+            storage_components.extend([freq_reg_up, freq_reg_down])
+        
+        if spin_reserve_config.get('enable', False):
+            # 向上旋转备用
+            spin_reserve_up = solph.components.Sink(
+                label="spin_reserve_up_service",
+                inputs={
+                    self.components['bus_electricity']: solph.Flow(
+                        nominal_value=spin_reserve_config.get('max_capacity_mw', 15),
+                        variable_costs=-spin_reserve_config.get('up_price_yuan_mw', 60)  # 负成本表示收入
+                    )
+                }
+            )
+            
+            # 向下旋转备用
+            spin_reserve_down = solph.components.Source(
+                label="spin_reserve_down_service",
+                outputs={
+                    self.components['bus_electricity']: solph.Flow(
+                        nominal_value=spin_reserve_config.get('max_capacity_mw', 15),
+                        variable_costs=-spin_reserve_config.get('down_price_yuan_mw', 50)  # 负成本表示收入
+                    )
+                }
+            )
+            
+            storage_components.extend([spin_reserve_up, spin_reserve_down])
+        
+        self.components['energy_storage'] = storage_components
     
     def _create_adjustable_loads(self):
         """创建可调负荷"""

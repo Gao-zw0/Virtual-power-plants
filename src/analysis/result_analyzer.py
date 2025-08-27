@@ -164,6 +164,27 @@ class ResultAnalyzer:
             if not heat_pump_sequences.empty:
                 results_df['heat_pump_load_mw'] = heat_pump_sequences.iloc[:, 0].values
         
+        # 提取辅助服务
+        if 'freq_reg_up_service' in component_results:
+            freq_reg_up_sequences = component_results['freq_reg_up_service']['sequences']
+            if not freq_reg_up_sequences.empty:
+                results_df['freq_reg_up_mw'] = freq_reg_up_sequences.iloc[:, 0].values
+        
+        if 'freq_reg_down_service' in component_results:
+            freq_reg_down_sequences = component_results['freq_reg_down_service']['sequences']
+            if not freq_reg_down_sequences.empty:
+                results_df['freq_reg_down_mw'] = freq_reg_down_sequences.iloc[:, 0].values
+        
+        if 'spin_reserve_up_service' in component_results:
+            spin_reserve_up_sequences = component_results['spin_reserve_up_service']['sequences']
+            if not spin_reserve_up_sequences.empty:
+                results_df['spin_reserve_up_mw'] = spin_reserve_up_sequences.iloc[:, 0].values
+        
+        if 'spin_reserve_down_service' in component_results:
+            spin_reserve_down_sequences = component_results['spin_reserve_down_service']['sequences']
+            if not spin_reserve_down_sequences.empty:
+                results_df['spin_reserve_down_mw'] = spin_reserve_down_sequences.iloc[:, 0].values
+        
         # 计算衍生指标
         self._calculate_derived_metrics(results_df)
         
@@ -265,6 +286,46 @@ class ResultAnalyzer:
         
         economics['adjustable_loads_cost_yuan'] = economics['chiller_cost_yuan'] + economics['heat_pump_cost_yuan']
         
+        # 辅助服务收入
+        battery_config = self.config.get('energy_resources', {}).get('battery_storage', {})
+        ancillary_config = battery_config.get('ancillary_services', {})
+        
+        # 调频服务收入
+        freq_reg_config = ancillary_config.get('frequency_regulation', {})
+        if freq_reg_config.get('enable', False):
+            freq_reg_up_capacity = self.results_df.get('freq_reg_up_mw', pd.Series(0, index=self.time_index)).sum()
+            freq_reg_down_capacity = self.results_df.get('freq_reg_down_mw', pd.Series(0, index=self.time_index)).sum()
+            
+            freq_reg_up_price = freq_reg_config.get('up_price_yuan_mw', 80)
+            freq_reg_down_price = freq_reg_config.get('down_price_yuan_mw', 70)
+            
+            economics['freq_reg_up_revenue_yuan'] = freq_reg_up_capacity * freq_reg_up_price
+            economics['freq_reg_down_revenue_yuan'] = freq_reg_down_capacity * freq_reg_down_price
+        else:
+            economics['freq_reg_up_revenue_yuan'] = 0
+            economics['freq_reg_down_revenue_yuan'] = 0
+        
+        # 备用服务收入
+        spin_reserve_config = ancillary_config.get('spinning_reserve', {})
+        if spin_reserve_config.get('enable', False):
+            spin_reserve_up_capacity = self.results_df.get('spin_reserve_up_mw', pd.Series(0, index=self.time_index)).sum()
+            spin_reserve_down_capacity = self.results_df.get('spin_reserve_down_mw', pd.Series(0, index=self.time_index)).sum()
+            
+            spin_reserve_up_price = spin_reserve_config.get('up_price_yuan_mw', 60)
+            spin_reserve_down_price = spin_reserve_config.get('down_price_yuan_mw', 50)
+            
+            economics['spin_reserve_up_revenue_yuan'] = spin_reserve_up_capacity * spin_reserve_up_price
+            economics['spin_reserve_down_revenue_yuan'] = spin_reserve_down_capacity * spin_reserve_down_price
+        else:
+            economics['spin_reserve_up_revenue_yuan'] = 0
+            economics['spin_reserve_down_revenue_yuan'] = 0
+        
+        # 辅助服务总收入
+        economics['ancillary_services_revenue_yuan'] = (
+            economics['freq_reg_up_revenue_yuan'] + economics['freq_reg_down_revenue_yuan'] +
+            economics['spin_reserve_up_revenue_yuan'] + economics['spin_reserve_down_revenue_yuan']
+        )
+        
         # 电网交易
         grid_purchase_energy = self.results_df.get('grid_purchase_mw', pd.Series(0, index=self.time_index))
         grid_sale_energy = self.results_df.get('grid_sale_mw', pd.Series(0, index=self.time_index))
@@ -293,7 +354,7 @@ class ResultAnalyzer:
             economics['grid_purchase_cost_yuan']
         )
         
-        economics['total_revenue_yuan'] = economics['grid_sale_revenue_yuan']
+        economics['total_revenue_yuan'] = economics['grid_sale_revenue_yuan'] + economics['ancillary_services_revenue_yuan']
         economics['net_cost_yuan'] = economics['total_cost_yuan'] - economics['total_revenue_yuan']
         
         # 平均指标
@@ -378,6 +439,31 @@ class ResultAnalyzer:
         else:
             metrics['adjustable_load_ratio'] = 0
         
+        # 辅助服务指标
+        freq_reg_up_capacity = self.results_df.get('freq_reg_up_mw', pd.Series(0, index=self.time_index))
+        freq_reg_down_capacity = self.results_df.get('freq_reg_down_mw', pd.Series(0, index=self.time_index))
+        spin_reserve_up_capacity = self.results_df.get('spin_reserve_up_mw', pd.Series(0, index=self.time_index))
+        spin_reserve_down_capacity = self.results_df.get('spin_reserve_down_mw', pd.Series(0, index=self.time_index))
+        
+        metrics['freq_reg_up_avg_mw'] = freq_reg_up_capacity.mean()
+        metrics['freq_reg_down_avg_mw'] = freq_reg_down_capacity.mean()
+        metrics['spin_reserve_up_avg_mw'] = spin_reserve_up_capacity.mean()
+        metrics['spin_reserve_down_avg_mw'] = spin_reserve_down_capacity.mean()
+        
+        # 辅助服务总容量
+        metrics['total_ancillary_services_mw'] = (
+            metrics['freq_reg_up_avg_mw'] + metrics['freq_reg_down_avg_mw'] +
+            metrics['spin_reserve_up_avg_mw'] + metrics['spin_reserve_down_avg_mw']
+        )
+        
+        # 辅助服务参与率（相对于储能容量）
+        battery_config = self.config.get('energy_resources', {}).get('battery_storage', {})
+        battery_capacity = battery_config.get('power_capacity_mw', 50)
+        if battery_capacity > 0:
+            metrics['ancillary_services_participation_ratio'] = metrics['total_ancillary_services_mw'] / battery_capacity
+        else:
+            metrics['ancillary_services_participation_ratio'] = 0
+        
         # 自给自足率
         if metrics['load_total_mwh'] > 0:
             self_supply = metrics['total_renewable_mwh'] + self.results_df.get('gas_generation_mw', pd.Series(0, index=self.time_index)).sum()
@@ -458,9 +544,27 @@ class ResultAnalyzer:
             if 'adjustable_load_ratio' in self.technical_metrics:
                 report_lines.append(f"可调负荷参与率: {self.technical_metrics['adjustable_load_ratio']:.1%}")
         
+        # 辅助服务
+        if 'total_ancillary_services_mw' in self.technical_metrics and self.technical_metrics['total_ancillary_services_mw'] > 0:
+            report_lines.append("\n【辅助服务】")
+            if 'freq_reg_up_avg_mw' in self.technical_metrics:
+                report_lines.append(f"向上调频平均容量: {self.technical_metrics['freq_reg_up_avg_mw']:.2f} MW")
+            if 'freq_reg_down_avg_mw' in self.technical_metrics:
+                report_lines.append(f"向下调频平均容量: {self.technical_metrics['freq_reg_down_avg_mw']:.2f} MW")
+            if 'spin_reserve_up_avg_mw' in self.technical_metrics:
+                report_lines.append(f"向上备用平均容量: {self.technical_metrics['spin_reserve_up_avg_mw']:.2f} MW")
+            if 'spin_reserve_down_avg_mw' in self.technical_metrics:
+                report_lines.append(f"向下备用平均容量: {self.technical_metrics['spin_reserve_down_avg_mw']:.2f} MW")
+            if 'total_ancillary_services_mw' in self.technical_metrics:
+                report_lines.append(f"辅助服务总容量: {self.technical_metrics['total_ancillary_services_mw']:.2f} MW")
+            if 'ancillary_services_participation_ratio' in self.technical_metrics:
+                report_lines.append(f"辅助服务参与率: {self.technical_metrics['ancillary_services_participation_ratio']:.1%}")
+        
         # 经济性分析
         report_lines.append("\n【经济性分析】")
         report_lines.append(f"总运行成本: {self.economics['total_cost_yuan']:,.2f} 元")
+        if 'ancillary_services_revenue_yuan' in self.economics and self.economics['ancillary_services_revenue_yuan'] > 0:
+            report_lines.append(f"辅助服务收入: {self.economics['ancillary_services_revenue_yuan']:,.2f} 元")
         report_lines.append(f"总售电收入: {self.economics['total_revenue_yuan']:,.2f} 元")
         report_lines.append(f"净运行成本: {self.economics['net_cost_yuan']:,.2f} 元")
         report_lines.append(f"平均电价: {self.economics['average_electricity_price_yuan_mwh']:.2f} 元/MWh")

@@ -35,6 +35,28 @@ energy_resources:
     initial_soc: 0.5  # 初始SOC
     charge_cost_yuan_mwh: 10  # 充电成本 (元/MWh)
     discharge_cost_yuan_mwh: 15  # 放电成本 (元/MWh)
+    
+    # 辅助服务配置
+    ancillary_services:
+      # 调频服务
+      frequency_regulation:
+        max_capacity_mw: 20  # 最大调频容量 (MW)
+        up_price_yuan_mw: 80  # 向上调频价格 (元/MW)
+        down_price_yuan_mw: 70  # 向下调频价格 (元/MW)
+        enable: true  # 是否启用调频服务
+        
+      # 旋转备用服务  
+      spinning_reserve:
+        max_capacity_mw: 15  # 最大备用容量 (MW)
+        up_price_yuan_mw: 60  # 向上备用价格 (元/MW)
+        down_price_yuan_mw: 50  # 向下备用价格 (元/MW)
+        enable: true  # 是否启用备用服务
+        
+      # 辅助服务约束
+      constraints:
+        mutual_exclusive: true  # 调频和备用服务是否互斥
+        soc_reserve_ratio: 0.1  # SOC预留比例（用于辅助服务）
+        response_time_sec: 15  # 响应时间要求 (秒)
 
 # 可调负荷配置
 adjustable_loads:
