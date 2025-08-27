@@ -395,19 +395,3 @@ uv pip install -e .
 ## 📝 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
-
-## 👥 贡献指南
-
-我们欢迎社区贡献！请遵循以下步骤：
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-### 开发规范
-- 代码风格遵循 PEP 8
-- 添加适当的单元测试
-- 更新相关文档
-- 确保所有测试通过
