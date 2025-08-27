@@ -1,0 +1,85 @@
+================================================================================
+虚拟电厂调度模式分析报告 - STORAGE_ONLY
+================================================================================
+生成时间: 2025-08-27 10:34:52
+
+📋 调度模式信息
+----------------------------------------
+模式名称: storage_only
+模式描述: 纯储能调度模式：仅储能系统参与调度，适用于储能电站运营
+目标函数: 最小化总运行成本 = 储能运行成本 + 电网交易成本
+
+🔧 资源配置
+----------------------------------------
+✗ photovoltaic: 禁用
+✗ wind: 禁用
+✗ gas_turbine: 禁用
+✓ battery_storage: 启用
+✗ adjustable_loads: 禁用
+✗ ancillary_services: 禁用
+
+💰 经济性分析
+----------------------------------------
+pv_cost_yuan: 0
+wind_cost_yuan: 0
+renewable_cost_yuan: 0
+gas_cost_yuan: 0
+battery_charge_cost_yuan: 27,464.42 元
+battery_discharge_cost_yuan: 39.70 元
+battery_total_cost_yuan: 27,504.12 元
+chiller_cost_yuan: 0
+heat_pump_cost_yuan: 0
+adjustable_loads_cost_yuan: 0
+freq_reg_up_revenue_yuan: 0
+freq_reg_down_revenue_yuan: 0
+spin_reserve_up_revenue_yuan: 0
+spin_reserve_down_revenue_yuan: 0
+ancillary_services_revenue_yuan: 0
+grid_purchase_cost_yuan: 490,208.28 元
+grid_sale_revenue_yuan: 0.00 元
+total_generation_cost_yuan: 27,504.12 元
+total_cost_yuan: 517,712.40 元
+total_revenue_yuan: 0.00 元
+net_cost_yuan: 517,712.40 元
+average_cost_yuan_per_mwh: 410.96 元
+average_electricity_price_yuan_mwh: 395.12 元
+
+📊 技术指标
+----------------------------------------
+load_peak_mw: 70.3 MW
+load_valley_mw: 0.0 MW
+load_average_mw: 52.5 MW
+load_total_mwh: 1259.8 MWh
+load_factor: 0.75
+pv_generation_mwh: 0
+wind_generation_mwh: 0
+total_renewable_mwh: 0
+renewable_penetration_ratio: 0.00%
+battery_charge_mwh: 2746.4 MWh
+battery_discharge_mwh: 2.6 MWh
+battery_round_trip_efficiency: 0.00
+grid_purchase_mwh: 1283.0 MWh
+grid_sale_mwh: 0.0 MWh
+net_grid_purchase_mwh: 1283.0 MWh
+chiller_consumption_mwh: 0
+heat_pump_consumption_mwh: 0
+total_adjustable_loads_mwh: 0
+adjustable_load_ratio: 0.00%
+freq_reg_up_avg_mw: 0.0 MW
+freq_reg_down_avg_mw: 0.0 MW
+spin_reserve_up_avg_mw: 0.0 MW
+spin_reserve_down_avg_mw: 0.0 MW
+total_ancillary_services_mw: 0.0 MW
+ancillary_services_participation_ratio: 0.00%
+self_sufficiency_ratio: 0.00%
+max_power_imbalance_mw: 249.2 MW
+average_power_imbalance_mw: 113.4 MW
+supply_flexibility_index: 5.50
+
+🏗️ 系统概要
+----------------------------------------
+组件总数: 5
+时间段数: 24
+包含资源: battery_storage
+
+================================================================================
