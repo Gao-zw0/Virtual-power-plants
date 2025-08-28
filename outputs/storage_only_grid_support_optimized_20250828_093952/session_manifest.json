@@ -1,0 +1,72 @@
+{
+  "session_info": {
+    "session_directory": "storage_only_grid_support_optimized_20250828_093952",
+    "creation_time": "2025-08-28T09:39:53.881437",
+    "scheduling_mode": "storage_only",
+    "optimization_objective": "grid_support_optimized"
+  },
+  "file_structure": {
+    "input_data": {
+      "directory": "data",
+      "files": [
+        "input_data.csv"
+      ],
+      "count": 1
+    },
+    "optimization_results": {
+      "directory": "results",
+      "files": [
+        "optimization_results.csv"
+      ],
+      "count": 1
+    },
+    "economics_analysis": {
+      "directory": "economics",
+      "files": [
+        "economics_analysis.csv"
+      ],
+      "count": 1
+    },
+    "technical_metrics": {
+      "directory": "metrics",
+      "files": [
+        "technical_metrics.csv"
+      ],
+      "count": 1
+    },
+    "summary_report": {
+      "directory": "reports",
+      "files": [
+        "mode_summary_report.txt",
+        "summary_report.txt"
+      ],
+      "count": 2
+    },
+    "mode_summary": {
+      "directory": "reports",
+      "files": [
+        "mode_summary_report.txt",
+        "summary_report.txt"
+      ],
+      "count": 2
+    },
+    "plots": {
+      "directory": "plots",
+      "files": [
+        "optimization_results.png"
+      ],
+      "count": 1
+    },
+    "comparison_report": {
+      "directory": "comparisons",
+      "files": [],
+      "count": 0
+    },
+    "log_files": {
+      "directory": "logs",
+      "files": [],
+      "count": 0
+    }
+  },
+  "metadata": {}
+}
