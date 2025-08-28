@@ -6,7 +6,7 @@
 
 ## 🌟 系统效果预览
 
-![虚拟电厂调度优化效果展示](example/optimization_results.png)
+![虚拟电厂调度优化效果展示](examples/optimization_results.png)
 
 ---
 
