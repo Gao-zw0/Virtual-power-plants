@@ -16,14 +16,16 @@ from scipy.interpolate import interp1d
 class VPPDataGenerator:
     """虚拟电厂数据生成器"""
     
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, load_scale_factor: float = 1.0):
         """
         初始化数据生成器
         
         Args:
             config_path: 配置文件路径，如果为None则使用默认配置
+            load_scale_factor: 负荷缩放因子，1.0为原始大小，0.5为减半，2.0为翻倍
         """
         self.config = self._load_config(config_path)
+        self.load_scale_factor = load_scale_factor
         self.periods = self.config['time_settings']['periods']
         self.time_index = self._create_time_index()
         
@@ -128,6 +130,9 @@ class VPPDataGenerator:
         
         # 插值到目标时间段
         load_pattern = self._interpolate_pattern(base_pattern, self.periods)
+        
+        # 应用负荷缩放因子
+        load_pattern = load_pattern * self.load_scale_factor
         
         # 添加随机不确定性
         noise = np.random.normal(0, uncertainty, self.periods)
@@ -323,8 +328,14 @@ class VPPDataGenerator:
 
 # 示例使用
 if __name__ == "__main__":
-    # 创建数据生成器
+    # 创建数据生成器（默认负荷大小）
     generator = VPPDataGenerator()
+    
+    # 或者创建负荷减半的数据生成器
+    # generator = VPPDataGenerator(load_scale_factor=0.5)
+    
+    # 或者创建负荷增加到原来1.5倍的数据生成器
+    # generator = VPPDataGenerator(load_scale_factor=1.5)
     
     # 生成并保存数据
     filepath = generator.save_data()

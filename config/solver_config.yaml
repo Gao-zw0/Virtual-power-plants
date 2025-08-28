@@ -9,7 +9,7 @@ solver:
 # CBC求解器参数
 cbc_options:
   # 基本参数
-  threads: 4  # 使用的线程数
+  threads: 16  # 使用的线程数
   timeLimit: 300  # 时间限制（秒）
   ratioGap: 0.01  # 最优性间隙（1%）
   

@@ -11,24 +11,24 @@ time_settings:
 energy_resources:
   # 光伏发电
   photovoltaic:
-    capacity_mw: 50  # 装机容量 (MW)
+    capacity_mw: 5  # 装机容量 (MW)
     variable_cost_yuan_mwh: 5  # 运维成本 (元/MWh)
     
   # 风力发电
   wind:
-    capacity_mw: 30  # 装机容量 (MW)
+    capacity_mw: 10  # 装机容量 (MW)
     variable_cost_yuan_mwh: 8  # 运维成本 (元/MWh)
     
   # 燃气机组
   gas_turbine:
-    capacity_mw: 100  # 装机容量 (MW)
+    capacity_mw: 20  # 装机容量 (MW)
     variable_cost_yuan_mwh: 600  # 发电成本 (元/MWh)
     min_output_ratio: 0.3  # 最小出力比例
     
   # 储能系统
   battery_storage:
-    power_capacity_mw: 50  # 功率容量 (MW)
-    energy_capacity_mwh: 200  # 能量容量 (MWh)
+    power_capacity_mw: 10  # 功率容量 (MW)
+    energy_capacity_mwh: 20  # 能量容量 (MWh)
     charge_efficiency: 0.95  # 充电效率
     discharge_efficiency: 0.95  # 放电效率
     self_discharge_rate: 0.001  # 自放电率 (%/h)
@@ -40,14 +40,14 @@ energy_resources:
     ancillary_services:
       # 调频服务
       frequency_regulation:
-        max_capacity_mw: 20  # 最大调频容量 (MW)
+        max_capacity_mw: 3  # 最大调频容量 (MW)
         up_price_yuan_mw: 80  # 向上调频价格 (元/MW)
         down_price_yuan_mw: 70  # 向下调频价格 (元/MW)
         enable: true  # 是否启用调频服务
         
       # 旋转备用服务  
       spinning_reserve:
-        max_capacity_mw: 15  # 最大备用容量 (MW)
+        max_capacity_mw: 2  # 最大备用容量 (MW)
         up_price_yuan_mw: 60  # 向上备用价格 (元/MW)
         down_price_yuan_mw: 50  # 向下备用价格 (元/MW)
         enable: true  # 是否启用备用服务
@@ -62,7 +62,7 @@ energy_resources:
 adjustable_loads:
   # 冷机系统
   chiller:
-    rated_power_mw: 20  # 额定功率 (MW)
+    rated_power_mw: 2  # 额定功率 (MW)
     min_power_ratio: 0.3  # 最小功率比例
     max_power_ratio: 1.0  # 最大功率比例
     efficiency: 0.85  # 制冷效率
@@ -72,7 +72,7 @@ adjustable_loads:
     
   # 热机系统
   heat_pump:
-    rated_power_mw: 15  # 额定功率 (MW)
+    rated_power_mw: 3  # 额定功率 (MW)
     min_power_ratio: 0.2  # 最小功率比例
     max_power_ratio: 1.0  # 最大功率比例
     cop: 3.5  # 制热系数 (Coefficient of Performance)
@@ -82,15 +82,15 @@ adjustable_loads:
 
 # 电网交易配置
 grid_connection:
-  max_purchase_mw: 1000  # 最大购电功率 (MW)
-  max_sale_mw: 500  # 最大售电功率 (MW)
+  max_purchase_mw: 10  # 最大购电功率 (MW)
+  max_sale_mw: 10  # 最大售电功率 (MW)
   sale_price_ratio: 0.95  # 售电价格比例（相对购电价格）
 
 # 负荷特性
 load_profile:
-  base_load_pattern: [45, 42, 40, 38, 37, 39, 42, 48, 55, 60, 
-                     65, 68, 70, 72, 70, 68, 66, 65, 62, 58, 
-                     55, 52, 48, 46]  # 24小时负荷模式 (MW)
+  base_load_pattern: [2.25, 2.1, 2.0, 1.9, 1.85, 1.95, 2.1, 2.4, 2.75, 3.0, 
+                     3.25, 3.4, 3.5, 3.6, 3.5, 3.4, 3.3, 3.25, 3.1, 2.9, 
+                     2.75, 2.6, 2.4, 2.3]  # 24小时负荷模式 (MW) - 已减少到原始的1/10
   load_uncertainty: 0.02  # 负荷不确定性 (±2%)
 
 # 电价配置
