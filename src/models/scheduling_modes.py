@@ -476,6 +476,8 @@ class OptimizedVPPModel(VPPOptimizationModel):
             },
             nominal_storage_capacity=battery_config['energy_capacity_mwh'],
             initial_storage_level=battery_config['initial_soc'],
+            min_storage_level=battery_config.get('min_soc', 0.2),  # 最小SOC约束
+            max_storage_level=battery_config.get('max_soc', 0.9),  # 最大SOC约束
             inflow_conversion_factor=battery_config['charge_efficiency'],
             outflow_conversion_factor=battery_config['discharge_efficiency'],
             loss_rate=battery_config['self_discharge_rate'],
